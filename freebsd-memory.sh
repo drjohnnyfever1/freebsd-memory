@@ -5,6 +5,8 @@
 ##  freebsd-memory -- List Total System Memory Usage
 ##  Copyright (c) 2003-2004 Ralf S. Engelschall <rse@engelschall.com>
 ## http://www.cyberciti.biz/files/scripts/freebsd-memory.pl.txt
+## This version maintained by Bill Sorenson 
+## https://github.com/drjohnnyfever1/freebsd-memory
 
 #   round the physical memory size to the next power of two which is
 #   reasonable for memory cards. We do this by first determining the
@@ -50,18 +52,20 @@ free_memory () {
 	* $sysctl_pagesize" | bc`
         mem_laundry=`echo "\`sysctl -n vm.stats.vm.v_laundry_count\` \
 	* $sysctl_pagesize" | bc`
+        mem_cache=`echo "\`sysctl -n vm.stats.vm.v_cache_count\` \
+	* $sysctl_pagesize" | bc`
         mem_free=`echo "\`sysctl -n vm.stats.vm.v_free_count\` \
 	* $sysctl_pagesize" | bc`
 
         #   determine the individual unknown information
         mem_gap_vm=`echo "$mem_all - ( $mem_wire + $mem_active + \
-	$mem_inactive + $mem_laundry + $mem_free )" | bc`
+	$mem_inactive + $mem_laundry + $mem_cache + $mem_free )" | bc`
         mem_gap_sys=`echo "$mem_phys - $mem_all" | bc`
         mem_gap_hw=`echo "$mem_hw - $mem_phys" | bc`
 
         #   determine logical summary information
         mem_total=$mem_hw
-        mem_avail=`echo "$mem_inactive + $mem_laundry + $mem_free" | bc`
+        mem_avail=`echo "$mem_inactive + $mem_laundry + $mem_cache + $mem_free" | bc`
         mem_used=`echo "$mem_total - $mem_avail" | bc`
 
         #   print system results
@@ -78,6 +82,9 @@ free_memory () {
         printf "mem_laundry: + %12d (%7dMB) [%3d%%] %s\n" $mem_laundry \
 	`echo "$mem_laundry / ( 1024 * 1024 )" | bc` `echo "$mem_laundry \
 	* 100 / $mem_all" | bc` "Laundry: pages to be cleaned for paging"
+        printf "mem_cache:   + %12d (%7dMB) [%3d%%] %s\n" $mem_cache \
+	`echo "$mem_cache / ( 1024 * 1024 )" | bc` `echo "$mem_cache \
+	* 100 / $mem_all" | bc` "Cached: almost avail. for allocation"
         printf "mem_free:    + %12d (%7dMB) [%3d%%] %s\n" $mem_free \
 	`echo "$mem_free / ( 1024 * 1024 )" | bc` `echo "$mem_free \
 	* 100 / $mem_all" | bc` "Free: fully available for allocation"
